@@ -1,0 +1,4 @@
+name: OsireRAG
+version: latest
+location: devartech/api
+registry: docker
