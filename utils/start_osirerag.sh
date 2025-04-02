@@ -1,15 +1,17 @@
 #!/bin/bash
 
 #SBATCH --job-name="OsireRAG Service - Slurm Job"
-#SBATCH --output=../../output/osirerag_%j.out
 #SBATCH --partition=teaching
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:t4:1
 #SBATCH --cpus-per-gpu=4
 #SBATCH --time=06:00:00
+#SBATCH --output=slurm_output_placeholder.out  # temporary placeholder
 
-## Ensure output directory exists
-mkdir -p ../../output
+# Now override the output programmatically
+USER_OUTPUT_DIR="/home/$SLURM_JOB_USER/osire/output"
+mkdir -p "$USER_OUTPUT_DIR"
+exec > "$USER_OUTPUT_DIR/osirerag_${SLURM_JOB_ID}.out" 2>&1
 
 ## Default values
 API_TOKEN=""
