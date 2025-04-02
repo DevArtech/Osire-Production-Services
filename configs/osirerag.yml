@@ -2,3 +2,4 @@ name: OsireRAG
 version: latest
 location: devartech/api
 registry: docker
+start_utility: start_osirerag.sh
