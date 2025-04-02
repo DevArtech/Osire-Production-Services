@@ -68,7 +68,28 @@ echo "Executing node hostname: $(hostname)"
 
 # Set hardcoded paths for osirerag
 SERVICE_NAME="OsireRAG"
-IMAGE_PATH="../containers/osirerag.sif"
+
+# Determine container image path - with multiple fallback methods
+# First, try to get the script directory using readlink (GNU method)
+if command -v readlink >/dev/null 2>&1; then
+    SCRIPT_DIR=$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")
+    IMAGE_PATH="${SCRIPT_DIR}/../containers/osirerag.sif"
+else
+    # If readlink not available or failed, try relative path from $PWD
+    SCRIPT_DIR=$(dirname "$0")
+    IMAGE_PATH="$(cd "$SCRIPT_DIR" && pwd)/../containers/osirerag.sif"
+fi
+
+# If all else fails, try a fixed path relative to home directory
+if [ ! -f "$IMAGE_PATH" ]; then
+    echo "Warning: Could not find container using script path method, trying fixed path..."
+    IMAGE_PATH="$HOME/osire-testing/osire/containers/osirerag.sif"
+fi
+
+# Another fallback to check for container in standard location
+if [ ! -f "$IMAGE_PATH" ]; then
+    IMAGE_PATH="/home/$USER/osire/containers/osirerag.sif"
+fi
 
 echo "Service: $SERVICE_NAME"
 echo "Container image: $IMAGE_PATH"
@@ -77,6 +98,10 @@ echo "Container image: $IMAGE_PATH"
 if [ ! -f "$IMAGE_PATH" ]; then
     echo "Error: OsireRAG container image does not exist: $IMAGE_PATH" >&2
     echo "Please run setup.py first to build the container images." >&2
+    echo "Expected container paths checked:" >&2
+    echo "  - ${SCRIPT_DIR}/../containers/osirerag.sif" >&2
+    echo "  - $HOME/osire-testing/osire/containers/osirerag.sif" >&2
+    echo "  - /home/$USER/osire/containers/osirerag.sif" >&2
     exit 1
 fi
 
@@ -96,6 +121,11 @@ MODIFIED_URL=$(echo "$BASE_URL" | sed -e 's#^/node/##' -e 's#/[^/]*$##')
 
 echo "BASE_URL: $BASE_URL"
 echo "MODIFIED_URL: $MODIFIED_URL"
+
+# Change to the user's home directory before running the container
+# This ensures .osire will be created in the home directory
+echo "Changing to home directory: $HOME"
+cd "$HOME"
 
 # Run the Singularity container with the specified command
 echo "Running OsireRAG container..."
